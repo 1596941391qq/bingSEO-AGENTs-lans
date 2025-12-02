@@ -1,0 +1,171 @@
+# Vercel 部署指南
+
+本指南将帮助你将后端服务部署到 Vercel。
+
+## 📋 前置要求
+
+1. 一个 GitHub 账户
+2. 一个 Vercel 账户（可在 [vercel.com](https://vercel.com) 免费注册）
+3. 项目已推送到 GitHub 仓库
+
+## 🚀 部署步骤
+
+### 方法一：通过 Vercel Dashboard（推荐）
+
+1. **登录 Vercel**
+   - 访问 [vercel.com](https://vercel.com)
+   - 使用 GitHub 账户登录
+
+2. **导入项目**
+   - 点击 "Add New..." → "Project"
+   - 选择你的 GitHub 仓库 `bingSEO-AGENTs-lans`
+   - 点击 "Import"
+
+3. **配置项目**
+   - **Framework Preset**: 选择 "Other" 或留空
+   - **Root Directory**: 保持默认（`.`）
+   - **Build Command**: 留空（Vercel 会自动处理 TypeScript）
+   - **Output Directory**: 留空
+   - **Install Command**: `npm install`
+
+4. **配置环境变量**
+   在 "Environment Variables" 部分添加以下变量（如果需要覆盖默认值）：
+   
+   ```
+   GEMINI_PROXY_URL=https://api.302.ai
+   GEMINI_API_KEY=你的API密钥
+   GEMINI_MODEL=gemini-2.5-flash
+   THORDATA_API_TOKEN=你的Token
+   THORDATA_API_URL=https://scraperapi.thordata.com/request
+   ```
+   
+   > **注意**: 如果代码中已有默认值且你不需要修改，可以跳过这一步。
+
+5. **部署**
+   - 点击 "Deploy"
+   - 等待部署完成（通常需要 1-2 分钟）
+
+6. **获取部署 URL**
+   - 部署完成后，你会得到一个 URL，例如：`https://your-project.vercel.app`
+   - 你的 API 端点将是：
+     - `https://your-project.vercel.app/api/generate-keywords`
+     - `https://your-project.vercel.app/api/analyze-ranking`
+     - `https://your-project.vercel.app/api/deep-dive-strategy`
+     - `https://your-project.vercel.app/api/translate-prompt`
+     - `https://your-project.vercel.app/api/translate-text`
+     - `https://your-project.vercel.app/health`
+
+### 方法二：通过 Vercel CLI
+
+1. **安装 Vercel CLI**
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **登录 Vercel**
+   ```bash
+   vercel login
+   ```
+
+3. **在项目目录中部署**
+   ```bash
+   cd D:\bing-seo-agent
+   vercel
+   ```
+
+4. **按照提示操作**
+   - 选择项目范围
+   - 确认项目设置
+   - 如果需要，添加环境变量
+
+5. **生产环境部署**
+   ```bash
+   vercel --prod
+   ```
+
+## 🔧 配置文件说明
+
+### vercel.json
+已创建的 `vercel.json` 配置文件包含：
+- **builds**: 指定使用 `@vercel/node` 构建 TypeScript 文件
+- **routes**: 将所有请求路由到 `server/index.ts`
+- **env**: 设置生产环境变量
+
+### server/index.ts
+已修改为同时支持：
+- **本地开发**: 使用 `npm run server` 启动 Express 服务器
+- **Vercel 部署**: 导出 Express app 作为 serverless function
+
+## 🧪 测试部署
+
+部署完成后，测试健康检查端点：
+
+```bash
+curl https://your-project.vercel.app/health
+```
+
+应该返回：
+```json
+{
+  "status": "ok",
+  "message": "Server is running"
+}
+```
+
+## 🔄 自动部署
+
+一旦配置完成，每次你推送到 GitHub 的 `main` 分支时，Vercel 会自动：
+1. 检测到新的提交
+2. 重新构建项目
+3. 部署新版本
+
+你可以在 Vercel Dashboard 中查看部署历史和日志。
+
+## 📝 环境变量管理
+
+### 在 Vercel Dashboard 中设置
+1. 进入项目设置
+2. 点击 "Environment Variables"
+3. 添加变量并选择环境（Production, Preview, Development）
+
+### 使用 Vercel CLI 设置
+```bash
+vercel env add GEMINI_API_KEY
+# 然后输入值
+```
+
+## ⚠️ 注意事项
+
+1. **冷启动**: Vercel 的 serverless functions 在长时间不活动后会有冷启动延迟（通常 < 1 秒）
+
+2. **超时限制**: 
+   - Hobby 计划：10 秒
+   - Pro 计划：60 秒
+   - 如果 API 调用时间较长，可能需要升级计划
+
+3. **文件系统**: Vercel 的 serverless functions 是只读的，不能写入文件系统
+
+4. **环境变量**: 敏感信息（如 API 密钥）应该通过 Vercel Dashboard 设置，不要提交到 Git
+
+## 🐛 故障排除
+
+### 部署失败
+- 检查构建日志中的错误信息
+- 确保所有依赖都在 `package.json` 中
+- 检查 TypeScript 编译错误
+
+### API 返回 500 错误
+- 查看 Vercel 的 Function Logs
+- 检查环境变量是否正确设置
+- 验证 API 密钥是否有效
+
+### 路由不工作
+- 确认 `vercel.json` 配置正确
+- 检查路由路径是否匹配
+
+## 📚 更多资源
+
+- [Vercel 文档](https://vercel.com/docs)
+- [Vercel Node.js 运行时](https://vercel.com/docs/functions/runtimes/node-js)
+- [Express on Vercel](https://vercel.com/guides/using-express-with-vercel)
+

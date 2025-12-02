@@ -21,7 +21,7 @@ app.get('/health', (req, res) => {
 app.post('/api/generate-keywords', async (req, res) => {
   try {
     const { seedKeyword, targetLanguage, systemInstruction, existingKeywords, roundIndex } = req.body;
-    
+
     if (!seedKeyword || !targetLanguage || !systemInstruction) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -43,13 +43,22 @@ app.post('/api/generate-keywords', async (req, res) => {
 
 app.post('/api/analyze-ranking', async (req, res) => {
   try {
-    const { keywords, systemInstruction } = req.body;
-    
+    const { keywords, systemInstruction, uiLanguage, targetLanguage } = req.body;
+
     if (!keywords || !Array.isArray(keywords) || keywords.length === 0 || !systemInstruction) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const analyzedKeywords = await analyzeRankingProbability(keywords, systemInstruction);
+    // 如果没有提供 uiLanguage 和 targetLanguage，尝试从 keywords 中推断
+    const uiLang = uiLanguage || (keywords[0]?.uiLanguage) || 'en';
+    const targetLang = targetLanguage || (keywords[0]?.targetLanguage) || 'en';
+
+    const analyzedKeywords = await analyzeRankingProbability(
+      keywords,
+      systemInstruction,
+      uiLang as 'zh' | 'en',
+      targetLang
+    );
 
     res.json({ keywords: analyzedKeywords });
   } catch (error: any) {
@@ -61,7 +70,7 @@ app.post('/api/analyze-ranking', async (req, res) => {
 app.post('/api/deep-dive-strategy', async (req, res) => {
   try {
     const { keyword, uiLanguage, targetLanguage } = req.body;
-    
+
     if (!keyword || !uiLanguage || !targetLanguage) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -78,7 +87,7 @@ app.post('/api/deep-dive-strategy', async (req, res) => {
 app.post('/api/translate-prompt', async (req, res) => {
   try {
     const { prompt } = req.body;
-    
+
     if (!prompt) {
       return res.status(400).json({ error: 'Missing prompt field' });
     }
@@ -95,7 +104,7 @@ app.post('/api/translate-prompt', async (req, res) => {
 app.post('/api/translate-text', async (req, res) => {
   try {
     const { text, targetLanguage } = req.body;
-    
+
     if (!text || !targetLanguage) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -109,20 +118,26 @@ app.post('/api/translate-text', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  console.log(`📝 Health check: http://localhost:${PORT}/health`);
-}).on('error', (err: NodeJS.ErrnoException) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ 错误: 端口 ${PORT} 已被占用！`);
-    console.error(`💡 解决方案:`);
-    console.error(`   1. 关闭占用端口的进程: netstat -ano | findstr :${PORT}`);
-    console.error(`   2. 或者修改 .env 文件中的 PORT 为其他端口（如 3002）`);
-    console.error(`   3. 或者终止占用进程: taskkill /PID <进程ID> /F`);
-    process.exit(1);
-  } else {
-    console.error('❌ 服务器启动失败:', err);
-    process.exit(1);
-  }
-});
+// Export for Vercel serverless functions
+export default app;
+
+// Start server only if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+    console.log(`📝 Health check: http://localhost:${PORT}/health`);
+  }).on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ 错误: 端口 ${PORT} 已被占用！`);
+      console.error(`💡 解决方案:`);
+      console.error(`   1. 关闭占用端口的进程: netstat -ano | findstr :${PORT}`);
+      console.error(`   2. 或者修改 .env 文件中的 PORT 为其他端口（如 3002）`);
+      console.error(`   3. 或者终止占用进程: taskkill /PID <进程ID> /F`);
+      process.exit(1);
+    } else {
+      console.error('❌ 服务器启动失败:', err);
+      process.exit(1);
+    }
+  });
+}
 
