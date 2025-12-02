@@ -31,9 +31,16 @@ npm install
 在项目根目录创建 `.env` 文件：
 
 ```env
+# 后端环境变量
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_PROXY_URL=https://api.302.ai
+GEMINI_MODEL=gemini-2.5-flash
 THORDATA_API_TOKEN=your_thordata_api_token_here
 THORDATA_API_URL=https://scraperapi.thordata.com/request
 PORT=3001
+
+# 前端环境变量（可选，仅在需要自定义 API 地址时设置）
+# VITE_API_URL=http://localhost:3001
 ```
 
 ### 启动项目
@@ -45,17 +52,20 @@ npm run dev:all
 ```
 
 这将启动：
+
 - 后端服务器：http://localhost:3001
 - 前端开发服务器：http://localhost:3000
 
 #### 方式二：分别启动
 
 **终端 1 - 启动后端：**
+
 ```bash
 npm run server
 ```
 
 **终端 2 - 启动前端：**
+
 ```bash
 npm run dev
 ```

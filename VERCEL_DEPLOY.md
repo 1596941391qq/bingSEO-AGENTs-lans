@@ -25,13 +25,17 @@
 
 3. **配置项目**
 
-   - **Framework Preset**: 选择 "Other" 或留空
+   - **Framework Preset**: 选择 "Vite"（Vercel 会自动检测）
    - **Root Directory**: 保持默认（`.`）
-   - **Build Command**: 留空（Vercel 会自动识别 `api/` 目录并构建 TypeScript）
-   - **Output Directory**: 留空
+   - **Build Command**: `npm run build`（Vercel 会自动检测）
+   - **Output Directory**: `dist`（Vite 默认输出目录）
    - **Install Command**: `npm install`
 
-   > **注意**: Vercel 会自动检测 `api/` 目录中的 TypeScript 文件并部署为 serverless functions
+   > **重要提示**:
+   >
+   > - Vercel 会自动检测 `api/` 目录中的 TypeScript 文件并部署为 serverless functions
+   > - 前端代码已自动配置，在生产环境会使用相对路径 `/api/...` 调用后端 API
+   > - **无需配置 `VITE_API_URL` 环境变量**，除非你需要使用不同的后端地址
 
 4. **配置环境变量**
    在 "Environment Variables" 部分添加以下变量（如果需要覆盖默认值）：
@@ -170,11 +174,27 @@ curl -X POST https://your-project.vercel.app/api/generate-keywords \
 
 ## 📝 环境变量管理
 
-### 在 Vercel Dashboard 中设置
+### API 地址自动配置
+
+前端代码已自动配置，会根据环境自动选择 API 地址：
+
+- **开发环境** (`npm run dev`): 使用 `http://localhost:3001`
+- **生产环境** (Vercel): 使用相对路径 `/api/...`（前端和后端在同一域名下）
+
+**无需手动配置 `VITE_API_URL`**，除非你需要使用不同的后端地址。
+
+### 后端环境变量
+
+在 Vercel Dashboard 中设置后端所需的环境变量：
 
 1. 进入项目设置
 2. 点击 "Environment Variables"
-3. 添加变量并选择环境（Production, Preview, Development）
+3. 添加以下变量并选择环境（Production, Preview, Development）：
+   - `GEMINI_API_KEY` - Gemini API 密钥
+   - `GEMINI_PROXY_URL` - Gemini 代理地址（可选，默认：`https://api.302.ai`）
+   - `GEMINI_MODEL` - Gemini 模型（可选，默认：`gemini-2.5-flash`）
+   - `THORDATA_API_TOKEN` - ThorData API Token（可选）
+   - `THORDATA_API_URL` - ThorData API 地址（可选）
 
 ### 使用 Vercel CLI 设置
 

@@ -1,7 +1,27 @@
 // Frontend service - calls backend API instead of Gemini directly
 import { KeywordData, SEOStrategyReport, TargetLanguage } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// 自动检测 API 地址：
+// 1. 如果设置了 VITE_API_URL 环境变量，使用它
+// 2. 如果是生产环境（Vercel），使用相对路径（同域名）
+// 3. 否则使用本地开发地址
+const getApiBaseUrl = () => {
+  // 优先使用环境变量
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // 生产环境使用相对路径（前端和后端在同一域名下）
+  // Vite 的 import.meta.env.MODE === 'production' 表示生产环境
+  if (import.meta.env.MODE === 'production') {
+    return '';
+  }
+
+  // 开发环境使用本地服务器
+  return 'http://localhost:3001';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const apiCall = async (endpoint: string, body: any) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -31,7 +51,7 @@ export const translateText = async (text: string, targetLanguage: 'zh' | 'en'): 
 };
 
 export const generateKeywords = async (
-  seedKeyword: string, 
+  seedKeyword: string,
   targetLanguage: TargetLanguage,
   systemInstruction: string,
   existingKeywords: string[] = [],
@@ -48,7 +68,7 @@ export const generateKeywords = async (
 };
 
 export const analyzeRankingProbability = async (
-  keywords: KeywordData[], 
+  keywords: KeywordData[],
   systemInstruction: string
 ): Promise<KeywordData[]> => {
   const result = await apiCall('/api/analyze-ranking', {
@@ -59,7 +79,7 @@ export const analyzeRankingProbability = async (
 };
 
 export const generateDeepDiveStrategy = async (
-  keyword: KeywordData, 
+  keyword: KeywordData,
   uiLanguage: 'zh' | 'en',
   targetLanguage: TargetLanguage
 ): Promise<SEOStrategyReport> => {
