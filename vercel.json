@@ -1,19 +1,9 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "server/index.ts",
-      "use": "@vercel/node"
+      "source": "/health",
+      "destination": "/api/health"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "server/index.ts"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
 
