@@ -112,7 +112,7 @@ const getLanguageName = (code: TargetLanguage): string => {
 
 export const translatePromptToSystemInstruction = async (userPrompt: string): Promise<string> => {
   const response = await callGeminiAPI(
-    `Translate and optimize the following prompt into a high-quality System Instruction for an AI SEO Agent targeting Google Search. Keep the instruction in English for better model performance:\n\n"${userPrompt}"`
+    `Translate and optimize the following prompt into a high-quality System Instruction for an AI SEO Agent targeting Bing Search. Keep the instruction in English for better model performance:\n\n"${userPrompt}"`
   );
   return response.text || userPrompt;
 };
@@ -133,23 +133,28 @@ export const generateKeywords = async (
   targetLanguage: TargetLanguage,
   systemInstruction: string,
   existingKeywords: string[] = [],
-  roundIndex: number = 1
+  roundIndex: number = 1,
+  wordsPerRound: number = 10,
+  miningStrategy: 'horizontal' | 'vertical' = 'horizontal',
+  userSuggestion: string = '',
+  uiLanguage: 'zh' | 'en' = 'en'
 ): Promise<KeywordData[]> => {
   const targetLangName = getLanguageName(targetLanguage);
+  const uiLangName = uiLanguage === 'zh' ? 'Chinese' : 'English';
 
   let promptContext = "";
 
   if (roundIndex === 1) {
-    promptContext = `Generate 10 high-potential ${targetLangName} SEO keywords for the seed term: "${seedKeyword}". Focus on commercial and informational intent.
+    promptContext = `Generate ${wordsPerRound} high-potential ${targetLangName} SEO keywords for the seed term: "${seedKeyword}". Focus on commercial and informational intent.
 
 Return a JSON array with objects containing:
 - keyword: The keyword in ${targetLangName}
-- translation: Meaning in English/Chinese
+- translation: Meaning in ${uiLangName} (must be in ${uiLangName} based on the user interface language)
 - intent: One of "Informational", "Transactional", "Local", "Commercial"
 - volume: Estimated monthly searches (number)
 
 Example format:
-[{"keyword": "example", "translation": "示例", "intent": "Informational", "volume": 1000}]`;
+${uiLanguage === 'zh' ? '[{"keyword": "example", "translation": "示例", "intent": "Informational", "volume": 1000}]' : '[{"keyword": "example", "translation": "example meaning", "intent": "Informational", "volume": 1000}]'}`;
   } else {
     promptContext = `
 The user is looking for "Blue Ocean" opportunities in the ${targetLangName} market. 
@@ -159,11 +164,11 @@ CRITICAL: Do NOT generate similar words.
 Think LATERALLY. Use the "SCAMPER" method.
 Example: If seed is "AI Pet Photos", think "Pet ID Cards", "Fake Dog Passport", "Cat Genealogy".
 
-Generate 10 NEW, UNEXPECTED, but SEARCHABLE keywords related to "${seedKeyword}" in ${targetLangName}.
+Generate ${wordsPerRound} NEW, UNEXPECTED, but SEARCHABLE keywords related to "${seedKeyword}" in ${targetLangName}.
 
 Return a JSON array with objects containing:
 - keyword: The keyword in ${targetLangName}
-- translation: Meaning in English/Chinese
+- translation: Meaning in ${uiLangName} (must be in ${uiLangName} based on the user interface language)
 - intent: One of "Informational", "Transactional", "Local", "Commercial"
 - volume: Estimated monthly searches (number)`;
   }
@@ -396,13 +401,13 @@ export const generateDeepDiveStrategy = async (
   const targetLangName = getLanguageName(targetLanguage);
 
   const prompt = `
-You are a Strategic SEO Content Manager for Google ${targetLangName}. 
+You are a Strategic SEO Content Manager for Bing ${targetLangName}. 
 Create a detailed Content Strategy Report for the keyword: "${keyword.keyword}".
 
 Target Language: ${targetLangName}
 User Interface Language: ${uiLangName}
 
-Your goal is to outline a page that WILL rank #1 on Google.
+Your goal is to outline a page that WILL rank #1 on Bing.
 
 Requirements:
 1. Page Title (H1): Optimized for CTR and SEO in ${targetLangName}. Provide ${uiLangName} translation.
@@ -445,18 +450,18 @@ Return a JSON object:
 };
 
 export const DEFAULT_GEN_PROMPT_EN = `
-You are a Senior SEO Specialist for Google Search.
+You are a Senior SEO Specialist for Bing Search.
 Your task is to generate a comprehensive list of high-potential keywords in the target language.
 
 Rules:
 1. **Grammar**: Ensure perfect grammar and native phrasing for the target language.
 2. **Intent**: Mix Informational (How-to, guide) and Commercial (Best, Review, Buy).
 3. **LSI**: Include synonyms and semantically related terms.
-4. **Volume**: Estimate realistic monthly search volume for Google.
+4. **Volume**: Estimate realistic monthly search volume for Bing.
 `;
 
 export const DEFAULT_ANALYZE_PROMPT_EN = `
-You are a Google SERP Analysis AI.
+You are a Bing SERP Analysis AI.
 Estimate "Page 1 Probability" based on COMPETITION STRENGTH.
 
 **High Probability Indicators**:

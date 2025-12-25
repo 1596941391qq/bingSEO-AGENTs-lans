@@ -20,7 +20,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.post('/api/generate-keywords', async (req, res) => {
   try {
-    const { seedKeyword, targetLanguage, systemInstruction, existingKeywords, roundIndex } = req.body;
+    const { seedKeyword, targetLanguage, systemInstruction, existingKeywords, roundIndex, wordsPerRound, miningStrategy, userSuggestion, uiLanguage } = req.body;
 
     if (!seedKeyword || !targetLanguage || !systemInstruction) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -31,7 +31,11 @@ app.post('/api/generate-keywords', async (req, res) => {
       targetLanguage,
       systemInstruction,
       existingKeywords || [],
-      roundIndex || 1
+      roundIndex || 1,
+      wordsPerRound || 10,
+      miningStrategy || 'horizontal',
+      userSuggestion || '',
+      uiLanguage || 'en'
     );
 
     res.json({ keywords });

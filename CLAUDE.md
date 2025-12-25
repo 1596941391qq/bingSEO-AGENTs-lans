@@ -4,63 +4,153 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Bing SEO Agent - A React + Node.js + ThorData API SEO keyword research and analysis tool that helps find high-probability ranking opportunities through automated keyword mining and SERP analysis using Bing search data.
+Google SEO Agent is a React-based SEO keyword research and analysis tool that uses Google Gemini API to generate keywords, analyze ranking probabilities, and create content strategies. The project is deployed on Vercel using serverless functions.
+
+## Architecture
+
+- **Frontend**: React + TypeScript + Vite (port 3000)
+- **Backend**: Vercel Serverless Functions (Node.js + TypeScript) in `/api` directory
+- **AI Integration**: Google Gemini API with proxy support (302.ai)
+- **Authentication**: Cross-project auth with niche-mining (shared database + JWT)
+- **Deployment**: Vercel with automatic builds and environment variable management
 
 ## Key Commands
 
 ### Development
-- `npm run dev:all` - Start both frontend (port 3000) and backend (port 3001) simultaneously
-- `npm run dev` - Start frontend only (Vite dev server on port 3000)
-- `npm run server` - Start backend only (Express server with hot reload on port 3001)
-- `npm run build` - Build frontend for production
+```bash
+# Full development (frontend + API) - RECOMMENDED
+npm run dev:vercel
+# or
+vercel dev
 
-### Production
-- `npm run server:prod` - Start backend in production mode
+# Frontend only development
+npm run dev
 
-## Architecture
+# Build for production
+npm run build
 
-### Frontend (React + TypeScript + Vite)
-- **Main Component**: `App.tsx` - Single-page application with three-step workflow (input → mining → results)
-- **State Management**: React hooks with localStorage for archives and agent configs
-- **UI Framework**: Tailwind CSS with Lucide React icons
-- **Key Features**: Multi-language support (EN/ZH), real-time agent thoughts, SERP preview, CSV export
-
-### Backend (Node.js + Express + TypeScript)
-- **Entry Point**: `server/index.ts` - Express server with CORS and JSON middleware
-- **API Endpoints**: 
-  - `/health` - Health check
-  - `/api/generate-keywords` - Generate keyword candidates
-  - `/api/analyze-ranking` - Analyze ranking probability
-  - `/api/deep-dive-strategy` - Generate detailed SEO strategy
-  - `/api/translate-*` - Translation services
-- **Service Layer**: `server/services/thordata.ts` - ThorData SERP API integration
-
-### Core Types (`types.ts`)
-- `KeywordData` - Complete keyword analysis structure
-- `SEOStrategyReport` - Deep dive strategy report format
-- `AppState` - Frontend application state
-- `AgentConfig` - Saved agent configuration
-
-### Key Algorithms
-- **Mining Loop**: Iterative keyword generation → SERP analysis → probability scoring
-- **Blue Ocean Detection**: Keywords with <20 search results
-- **Ranking Probability**: HIGH/MEDIUM/LOW based on competitor analysis
-- **Agent Thoughts**: Real-time processing feedback with visual SERP evidence
-
-## Environment Setup
-
-Create `.env` file with:
-```
-THORDATA_API_TOKEN=your_thordata_api_token
-THORDATA_API_URL=https://scraperapi.thordata.com/request
-PORT=3001
+# Preview production build
+npm run preview
 ```
 
-## Development Notes
+### Vercel Deployment
+```bash
+# Install Vercel CLI
+npm i -g vercel
 
-- No test framework configured
-- No linting setup
-- Hot reload enabled for both frontend and backend
-- LocalStorage used for archives and agent configurations
-- Multi-language UI support (English/Chinese)
-- Real-time SERP snippets visible in agent thoughts stream
+# Deploy to Vercel
+vercel
+```
+
+## API Endpoints
+
+All API endpoints are in `/api` directory and follow Vercel serverless function patterns:
+
+### SEO功能
+- `/api/generate-keywords` - Generate SEO keywords using Gemini API
+- `/api/analyze-ranking` - Analyze keyword ranking probability
+- `/api/deep-dive-strategy` - Generate detailed content strategy
+- `/api/translate-prompt` - Translate and optimize system instructions
+- `/api/translate-text` - Translate text between languages
+
+### 认证功能
+- `/api/auth/verify-transfer` - Verify transfer token from main app
+- `/api/auth/session` - Validate JWT session
+- `/api/init-db` - Initialize database tables (run once)
+
+## Environment Variables
+
+Required for local development and Vercel deployment:
+
+```env
+# Gemini API
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_PROXY_URL=https://api.302.ai
+GEMINI_MODEL=gemini-2.5-flash
+
+# Authentication (must match niche-mining project)
+POSTGRES_URL=your_postgres_connection_string
+JWT_SECRET=your_jwt_secret_key
+MAIN_APP_URL=http://localhost:3000
+
+# Development mode
+NODE_ENV=development
+ENABLE_DEV_AUTO_LOGIN=true
+
+# Frontend
+VITE_MAIN_APP_URL=http://localhost:3000
+```
+
+**Important**: `POSTGRES_URL` and `JWT_SECRET` must be identical to the main app (niche-mining).
+
+## Code Structure
+
+### Frontend (Single File Architecture)
+- `App.tsx` - Main React application containing all UI components, state management, and API calls
+- `AuthStatusBar.tsx` - Login status bar component
+- `contexts/AuthContext.tsx` - Authentication context provider
+- `types.ts` - Shared TypeScript interfaces and enums
+- `index.tsx` - React app entry point (wrapped with AuthProvider)
+- `index.html` - HTML template
+
+### Backend API
+- `api/_shared/gemini.ts` - Gemini API service wrapper with all AI functions
+- `api/_shared/request-handler.ts` - Common request/response utilities
+- `api/_shared/types.ts` - API-specific TypeScript types
+- `api/lib/db.ts` - PostgreSQL database connection (pg library)
+- `api/lib/auth.ts` - JWT token generation and verification
+- `api/auth/verify-transfer.ts` - Transfer token verification endpoint
+- `api/auth/session.ts` - Session validation endpoint
+- `api/init-db.ts` - Database initialization script
+- Individual API endpoint files (`generate-keywords.ts`, `analyze-ranking.ts`, etc.)
+
+### Key Features Implementation
+
+1. **Keyword Generation**: Uses Gemini API to generate keywords in target languages with search volume estimates
+2. **Ranking Analysis**: Analyzes SERP competition and assigns probability scores (High/Medium/Low)
+3. **Content Strategy**: Generates detailed SEO content plans with H1 titles, meta descriptions, and content structure
+4. **Multi-language Support**: Supports 10+ target languages with UI in Chinese/English
+5. **Batch Processing**: Processes keywords in batches to avoid API rate limits
+6. **Cross-Project Authentication**: Shares login state with niche-mining via transfer tokens (dev mode: auto-login enabled)
+
+## Development Patterns
+
+### API Handler Pattern
+All API endpoints follow this structure:
+```typescript
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { parseRequestBody, setCorsHeaders, handleOptions, sendErrorResponse } from './_shared/request-handler';
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    setCorsHeaders(res);
+    if (req.method === 'OPTIONS') return handleOptions(res);
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    const body = parseRequestBody(req);
+    // Process request
+    return res.json({ result });
+  } catch (error) {
+    return sendErrorResponse(res, error, 'Error message');
+  }
+}
+```
+
+### Gemini API Integration
+All AI functions use the shared `callGeminiAPI` wrapper in `api/_shared/gemini.ts` which handles:
+- Proxy URL configuration
+- API key management
+- JSON response parsing
+- Error handling and logging
+- Request batching for rate limit management
+
+## Important Notes
+
+- API functions have 60-second timeout limit (Vercel serverless constraint)
+- Keywords are processed in batches of 3 to avoid rate limits
+- All API responses include CORS headers for frontend integration
+- Environment variables are automatically injected by Vercel in production
+- The project uses path alias `@/` mapped to project root in TypeScript and Vite configs
+- **Authentication**: Uses `pg` library for database (not `@vercel/postgres`), development mode enabled by default
+- **First-time setup**: Run `http://localhost:3002/api/init-db` to create database tables
+- **Auth setup guide**: See `AUTH_SETUP_SIMPLE.md` for quick configuration (5 minutes)

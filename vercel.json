@@ -1,9 +1,20 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "rewrites": [
+    {
+      "source": "/signin",
+      "destination": "/signin.html"
+    },
     {
       "source": "/health",
       "destination": "/api/health"
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 300
+    }
+  }
 }
-
