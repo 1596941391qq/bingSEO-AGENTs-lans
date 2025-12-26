@@ -3226,7 +3226,7 @@ export default function App() {
 
   // Main App URL
   const MAIN_APP_URL =
-    import.meta.env.VITE_MAIN_APP_URL || "http://www.nichedigger.ai";
+    import.meta.env.VITE_MAIN_APP_URL || "https://www.nichedigger.ai";
 
   // Get user credits
   const getUserCredits = async () => {

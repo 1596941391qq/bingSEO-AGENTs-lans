@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const initAuth = async () => {
     // 获取主应用 URL，并验证其有效性
     let mainAppUrl =
-      import.meta.env.VITE_MAIN_APP_URL || "http://www.nichedigger.ai";
+      import.meta.env.VITE_MAIN_APP_URL || "https://www.nichedigger.ai";
 
     // 验证 URL 格式
     if (
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.warn(
         "[AuthContext] Invalid or localhost URL detected, using default production URL"
       );
-      mainAppUrl = "http://www.nichedigger.ai";
+      mainAppUrl = "https://www.nichedigger.ai";
     }
 
     // 确保 URL 以 https:// 或 http:// 开头
@@ -265,7 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.removeItem("auth_token");
     setUser(null);
     const mainAppUrl =
-      import.meta.env.VITE_MAIN_APP_URL || "http://www.nichedigger.ai";
+      import.meta.env.VITE_MAIN_APP_URL || "https://www.nichedigger.ai";
     window.location.href = mainAppUrl;
   };
 
